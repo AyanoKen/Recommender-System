@@ -8,15 +8,19 @@ from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
+from flask import Blueprint, render_template
+
+recommender = Blueprint("recommender", __name__, static_folder="static")
+
 def GetRecommendations():
     def importDataset():
-        with open("dataset/headlinesFile.data", "rb") as filehandle:
+        with app.open_resource("static/dataset/headlinesFile.data", "rb") as filehandle:
           headlines = pickle.load(filehandle)
 
-        with open("dataset/corpusFile.data", "rb") as filehandle:
+        with app.open_resource("static/dataset/corpusFile.data", "rb") as filehandle:
           content = pickle.load(filehandle)
 
-        with open("dataset/dateFile.data", "rb") as filehandle:
+        with app.open_resource("static/dataset/dateFile.data", "rb") as filehandle:
           date_of_creation = pickle.load(filehandle)
 
         return headlines, content, date_of_creation
@@ -160,6 +164,4 @@ def GetRecommendations():
 
 
     #Collaborative Filtering
-    print(get_collaborative_recommendations(200))
-
-GetRecommendations()
+    return get_collaborative_recommendations(200)

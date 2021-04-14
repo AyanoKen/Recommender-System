@@ -5,7 +5,27 @@
 {% block body %}
 
 <div id="title" class="container-fluid">
-  <h1>News Recommender</h1>
+  <div class="row">
+    <div class="col-md-6">
+      <h1>News Recommender</h1>
+      <h4>News, Personalized to your Interests.</h4>
+    </div>
+    <div class="col-md-6">
+      <img src="{{ url_for('static', filename='globe.png') }}">
+    </div>
+  </div>
+</div>
+
+<div id="content" class="container-fluid">
+  <div class="card">
+    <div class="card-header">
+      <h3>Headlines</h3>
+    </div>
+    <div class="card-body">
+      <p class="card-text">With supporting text below as a natural lead-in to additional content.With supporting text below as a natural lead-in to additional content.With supporting text below as a natural lead-in to additional content.With supporting text below as a natural lead-in to additional content.With supporting text below as a natural lead-in to additional content.With supporting text below as a natural lead-in to additional content.With supporting text below as a natural lead-in to additional content.With supporting text below as a natural lead-in to additional content.With supporting text below as a natural lead-in to additional content.With supporting text below as a natural lead-in to additional content.With supporting text below as a natural lead-in to additional content.With supporting text below as a natural lead-in to additional content.With supporting text below as a natural lead-in to additional content.With supporting text below as a natural lead-in to additional content.</p>
+      <a href="/logout" class="btn">Read More</a>
+    </div>
+  </div>
 </div>
 
 {% endblock %}

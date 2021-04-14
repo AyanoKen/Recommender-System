@@ -1,5 +1,6 @@
 body{
   background-color: #FFFFFF;
+  margin: auto;
 }
 
 .container-fluid{
@@ -9,8 +10,48 @@ body{
 #title{
   background-color: #ff8a5c;
   color: #FFFFFF;
+  text-align: center;
 }
 
 #title h1{
-  padding: 5% 0;
+  padding-top: 15%;
+  text-align: left;
+  text-shadow: 0 0 10px #49beb7;
+}
+
+#title h4{
+  text-align: left;
+  padding-top: 2%;
+  padding-left: 6%;
+  text-shadow: 0 0 10px #49beb7;
+}
+
+#title img{
+  width: 60%;
+  filter: grayscale(100%);
+}
+
+#content .card{
+  box-shadow: 0 0 5px;
+  transition: box-shadow 0.5s;
+}
+
+#content .card:hover{
+  box-shadow: 0 0 30px #ff8a5c;
+}
+
+.card-header{
+  background-color: #49beb7;
+  color: white;
+  text-shadow: 0 0 5px grey;
+}
+
+#content .btn{
+  background-color: #49beb7;
+  color: white;
+}
+
+#content .btn:hover{
+  background-color: #badfdb;
+  color: black;
 }

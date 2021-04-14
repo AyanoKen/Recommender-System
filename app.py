@@ -1,5 +1,6 @@
 from flask import Flask, redirect, url_for, render_template, request, session
 from datetime import timedelta
+from src.recommender import test
 
 app = Flask(__name__)
 app.secret_key = "ThisIsNotAlabama"
@@ -34,6 +35,11 @@ def logout():
 @app.route("/register", methods=["POST", "GET"])
 def register():
     return render_template("register.html")
+
+@app.route("/trial")
+def trial():
+    x = test();
+    return x
 
 
 if __name__ == "__main__":

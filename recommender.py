@@ -14,13 +14,13 @@ recommender = Blueprint("recommender", __name__, static_folder="static")
 
 def GetRecommendations():
     def importDataset():
-        with app.open_resource("static/dataset/headlinesFile.data", "rb") as filehandle:
+        with open("static/dataset/headlinesFile.data", "rb") as filehandle:
           headlines = pickle.load(filehandle)
 
-        with app.open_resource("static/dataset/corpusFile.data", "rb") as filehandle:
+        with open("static/dataset/corpusFile.data", "rb") as filehandle:
           content = pickle.load(filehandle)
 
-        with app.open_resource("static/dataset/dateFile.data", "rb") as filehandle:
+        with open("static/dataset/dateFile.data", "rb") as filehandle:
           date_of_creation = pickle.load(filehandle)
 
         return headlines, content, date_of_creation
@@ -129,7 +129,14 @@ def GetRecommendations():
 
 
     #Dummy User data creation
-    user_data=create_dummy_users()
+    # user_data=create_dummy_users()
+    #
+    # with open("static/dataset/userFile.data", "wb") as filehandle:
+    #   pickle.dump(user_data, filehandle)
+
+    with open("static/dataset/userFile.data", "rb") as filehandle:
+      user_data = pickle.load(filehandle)
+
 
     combined_data=user_data.merge(dataset,on="id")
 
@@ -165,3 +172,8 @@ def GetRecommendations():
 
     #Collaborative Filtering
     return get_collaborative_recommendations(200)
+
+with open("static/dataset/users_new.data", "rb") as filehandle:
+  users = pickle.load(filehandle)
+
+print(users)

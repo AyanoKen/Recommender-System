@@ -15,8 +15,11 @@ app = Flask(__name__)
 app.secret_key = "ThisIsNotAlabama"
 app.permanent_session_lifetime = timedelta(days=5)
 
+# with open("static/dataset/users_new.data", "wb") as filehandle:
+#     users = {"admin": [1234, 0]}
+#     pickle.dump(users, filehandle)
 
-def GetRecommendations():
+def GetRecommendations(user):
     def importDataset():
         with app.open_resource("static/dataset/headlinesFile.data", "rb") as filehandle:
           headlines = pickle.load(filehandle)
@@ -168,13 +171,34 @@ def GetRecommendations():
 
 
     #Collaborative Filtering
-    return get_collaborative_recommendations(200)
+    return get_collaborative_recommendations(user)
 
+#Main Webpage
 @app.route("/")
 def index():
-    if "user" in session:
-        x = GetRecommendations();
-        return render_template("index.html", articles=x)
+    if "user" in session: #Checks if user is logged in
+        if session["user"][1] == 0: #When user is new and has no click through data
+            with app.open_resource("static/dataset/corpusFile.data", "rb") as filehandle:
+              content = pickle.load(filehandle)
+            with app.open_resource("static/dataset/headlinesFile.data", "rb") as filehandle:
+              headlines = pickle.load(filehandle)
+            #Creates random numbers from 0 to the len of the articles dataset to give user random articles
+            randomNumbers = []
+            while len(randomNumbers) < 10:
+                temp = random.randint(0, len(content) - 1)
+                if temp not in randomNumbers:
+                    randomNumbers.append(temp)
+            randomArticles = []
+            for i in randomNumbers:
+                randomArticles.append((content[i], headlines[i]))
+            return render_template("index.html", articles=randomArticles)
+        else: #When user has a click through data
+            with app.open_resource("static/dataset/users_new.data", "rb") as filehandle:
+              users = pickle.load(filehandle)
+            #Session[user] contains {username, new/old} data. Hence, users[session[user][0]]
+            # is the same as users[username]. The [2] represents the userid given to the user. 
+            x = GetRecommendations(users[session["user"][0]][2]);
+            return render_template("index.html", articles=x)
     else:
         return redirect(url_for("login"))
 
@@ -186,9 +210,18 @@ def login():
         if request.method == "POST":
             username = request.form["username"]
             password = request.form["password"]
-            session.permanent = True
-            session["user"] = username
-            return redirect(url_for("index"))
+
+            with app.open_resource("static/dataset/users_new.data", "rb") as filehandle:
+              users = pickle.load(filehandle)
+            if username in users:
+                if users[username][0] == password:
+                    session.permanent = True
+                    session["user"] = [username, users[username][1]]
+                    return redirect(url_for("index"))
+                else:
+                    return render_template("login.html")
+            else:
+                return render_template("login.html")
         else:
             return render_template("login.html")
 
@@ -199,7 +232,25 @@ def logout():
 
 @app.route("/register", methods=["POST", "GET"])
 def register():
-    return render_template("register.html")
+    if "user" in session:
+        return redirect(url_for("index"))
+    else:
+        if request.method == "POST":
+            username = request.form["username"]
+            password = request.form["password"]
+
+            with app.open_resource("static/dataset/users_new.data", "rb") as filehandle:
+              users = pickle.load(filehandle)
+
+            if username in users:
+                return render_template("login.html")
+            else:
+                users[username] = [password, 0]
+                with open("static/dataset/users_new.data", "wb") as filehandle:
+                    pickle.dump(users, filehandle)
+                return render_template("login.html")
+        else:
+            return render_template("register.html")
 
 
 if __name__ == "__main__":

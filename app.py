@@ -196,26 +196,31 @@ def index():
             with app.open_resource("static/dataset/users_new.data", "rb") as filehandle:
               users = pickle.load(filehandle)
             #Session[user] contains {username, new/old} data. Hence, users[session[user][0]]
-            # is the same as users[username]. The [2] represents the userid given to the user. 
+            #is the same as users[username]. The [2] represents the userid given to the user.
             x = GetRecommendations(users[session["user"][0]][2]);
             return render_template("index.html", articles=x)
     else:
         return redirect(url_for("login"))
 
+#Route for logging in to the web application
 @app.route("/login", methods=["POST", "GET"])
 def login():
-    if "user" in session:
+    if "user" in session: #If user is already logged in
         return redirect(url_for("index"))
-    else:
+    else: #If user is not logged in
         if request.method == "POST":
+            #Get the username and password entered by the user in the login form
             username = request.form["username"]
             password = request.form["password"]
 
+            #Open the user datafile
             with app.open_resource("static/dataset/users_new.data", "rb") as filehandle:
               users = pickle.load(filehandle)
-            if username in users:
-                if users[username][0] == password:
+
+            if username in users: #If the user is present in the datafile
+                if users[username][0] == password: #If the password entered by the user matches with the one in the datafile
                     session.permanent = True
+                    #The session data contains [Username, new/old user]
                     session["user"] = [username, users[username][1]]
                     return redirect(url_for("index"))
                 else:
@@ -230,22 +235,27 @@ def logout():
     session.pop("user", None)
     return redirect(url_for("login"))
 
+#Route to make a new user in the database
 @app.route("/register", methods=["POST", "GET"])
 def register():
-    if "user" in session:
+    if "user" in session: #If user is already logged in
         return redirect(url_for("index"))
-    else:
+    else: #If user is not logged in
         if request.method == "POST":
+            #Get the data entered by the user in the form
             username = request.form["username"]
             password = request.form["password"]
 
+            #Open the user datafile
             with app.open_resource("static/dataset/users_new.data", "rb") as filehandle:
               users = pickle.load(filehandle)
 
-            if username in users:
+            if username in users: #If user is already registered
                 return render_template("login.html")
-            else:
-                users[username] = [password, 0]
+            else: #Register user in the database
+                users[username] = [password, 0, 500 + len(users)] #[password, old/new, userid] 499 is the number of dummy usrs
+
+                #Rewrite the userfile to update it
                 with open("static/dataset/users_new.data", "wb") as filehandle:
                     pickle.dump(users, filehandle)
                 return render_template("login.html")

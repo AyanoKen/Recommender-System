@@ -8,9 +8,6 @@ from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-from flask import Blueprint, render_template
-
-recommender = Blueprint("recommender", __name__, static_folder="static")
 
 def GetRecommendations():
     def importDataset():
@@ -33,7 +30,7 @@ def GetRecommendations():
       return sen
 
     def get_docs(id):
-      return (dataset[dataset.id==id].Content.values[0],dataset[dataset.id==id].Headlines.values[0])
+        return (id,dataset[dataset.id==id].Content.values[0],dataset[dataset.id==id].Headlines.values[0])
 
     def create_dummy_users():
       l=[]
@@ -127,7 +124,6 @@ def GetRecommendations():
 
     dataset=pd.DataFrame({"id":[i for i in range(len(headlines))],"Headlines":preprocessed_headline,"Content":preprocessed_content,"date":datetime})
 
-
     #Dummy User data creation
     # user_data=create_dummy_users()
     #
@@ -173,7 +169,7 @@ def GetRecommendations():
     #Collaborative Filtering
     return get_collaborative_recommendations(200)
 
-with open("static/dataset/users_new.data", "rb") as filehandle:
+with open("static/dataset/userFile.data", "rb") as filehandle:
   users = pickle.load(filehandle)
 
 print(users)

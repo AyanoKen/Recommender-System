@@ -16,7 +16,7 @@ app.secret_key = "ThisIsNotAlabama"
 app.permanent_session_lifetime = timedelta(days=5)
 
 # with open("static/dataset/users_new.data", "wb") as filehandle:
-#     users = {"admin": [1234, 0]}
+#     users = {"admin": [1234, 0, 500]}
 #     pickle.dump(users, filehandle)
 
 def GetRecommendations(user):
@@ -39,8 +39,8 @@ def GetRecommendations(user):
       sen=re.sub(r"\s+"," ",text) #removing multiple spaces
       return sen
 
-    def get_docs(id):
-      return (dataset[dataset.id==id].Content.values[0],dataset[dataset.id==id].Headlines.values[0])
+    def get_docs(id):   #added just now
+        return (dataset[dataset.id==id].Content.values[0],dataset[dataset.id==id].Headlines.values[0], id)
 
     def create_dummy_users():
       l=[]
@@ -136,7 +136,19 @@ def GetRecommendations(user):
 
 
     #Dummy User data creation
-    user_data=create_dummy_users()
+    def clean_dataset(df):
+        assert isinstance(df, pd.DataFrame), "df needs to be a pd.DataFrame"
+        df.dropna(inplace=True)
+        indices_to_keep = ~df.isin([np.nan, np.inf, -np.inf]).any(1)
+        return df[indices_to_keep].astype(np.float64)
+
+    with app.open_resource("static/dataset/userFile.data", "rb") as filehandle:
+      user_data = pickle.load(filehandle)
+
+    user_data = clean_dataset(user_data)
+
+    # user_data = user_data.reset_index()
+    #user_data = create_dummy_users();
 
     combined_data=user_data.merge(dataset,on="id")
 
@@ -174,31 +186,59 @@ def GetRecommendations(user):
     return get_collaborative_recommendations(user)
 
 #Main Webpage
-@app.route("/")
+@app.route("/", methods=["POST", "GET"])
 def index():
     if "user" in session: #Checks if user is logged in
-        if session["user"][1] == 0: #When user is new and has no click through data
-            with app.open_resource("static/dataset/corpusFile.data", "rb") as filehandle:
-              content = pickle.load(filehandle)
-            with app.open_resource("static/dataset/headlinesFile.data", "rb") as filehandle:
-              headlines = pickle.load(filehandle)
-            #Creates random numbers from 0 to the len of the articles dataset to give user random articles
-            randomNumbers = []
-            while len(randomNumbers) < 10:
-                temp = random.randint(0, len(content) - 1)
-                if temp not in randomNumbers:
-                    randomNumbers.append(temp)
-            randomArticles = []
-            for i in randomNumbers:
-                randomArticles.append((content[i], headlines[i]))
-            return render_template("index.html", articles=randomArticles)
-        else: #When user has a click through data
+        if request.method == "POST":
+            data = request.form["data"]
+
+            #Open user clickthrough file
+            with app.open_resource("static/dataset/userFile.data", "rb") as filehandle:
+              userProfile = pickle.load(filehandle)
+
             with app.open_resource("static/dataset/users_new.data", "rb") as filehandle:
               users = pickle.load(filehandle)
-            #Session[user] contains {username, new/old} data. Hence, users[session[user][0]]
-            #is the same as users[username]. The [2] represents the userid given to the user.
-            x = GetRecommendations(users[session["user"][0]][2]);
-            return render_template("index.html", articles=x)
+
+            #TODO: Increase click frequency
+            # if users[session["user"][0]][2] in userProfile.user_id and data in userProfile
+            # print(89 in userProfile.user_id and 648 in userProfile.id)
+
+            if session["user"][1] == 0:
+                users[session["user"][0]][1] = 1
+                session["user"][1] = 1
+                with open("static/dataset/users_new.data", "wb") as filehandle:
+                    pickle.dump(users, filehandle)
+
+            df = pd.DataFrame([[users[session["user"][0]][2], data, 1]], columns=['user_id', 'id', 'click_frequency'])
+            userProfile = userProfile.append(df, ignore_index = True)
+
+            with open("static/dataset/userFile.data", "wb") as filehandle:
+                pickle.dump(userProfile, filehandle)
+
+            return redirect(url_for("index"))
+        else: #GET request
+            if session["user"][1] == 0: #When user is new and has no click through data
+                with app.open_resource("static/dataset/corpusFile.data", "rb") as filehandle:
+                  content = pickle.load(filehandle)
+                with app.open_resource("static/dataset/headlinesFile.data", "rb") as filehandle:
+                  headlines = pickle.load(filehandle)
+                #Creates random numbers from 0 to the len of the articles dataset to give user random articles
+                randomNumbers = []
+                while len(randomNumbers) < 10:
+                    temp = random.randint(0, len(content) - 1)
+                    if temp not in randomNumbers:
+                        randomNumbers.append(temp)
+                randomArticles = []
+                for i in randomNumbers:
+                    randomArticles.append((content[i], headlines[i], i))
+                return render_template("index.html", articles=randomArticles)
+            else: #When user has a click through data
+                with app.open_resource("static/dataset/users_new.data", "rb") as filehandle:
+                  users = pickle.load(filehandle)
+                #Session[user] contains {username, new/old} data. Hence, users[session[user][0]]
+                #is the same as users[username]. The [2] represents the userid given to the user.
+                x = GetRecommendations(users[session["user"][0]][2]);
+                return render_template("index.html", articles=x)
     else:
         return redirect(url_for("login"))
 
